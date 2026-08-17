@@ -1,5 +1,7 @@
+# Nano-sim
+
 <p align="center">
-  <img src="nano-sim-cover.png" alt="Nano-sim — Autonomous Driving Simulator" width="100%">
+  <img src="assets/nano-sim-cover.png" alt="Nano-sim — Autonomous Driving Simulator" width="100%">
 </p>
 
 <p align="center">
