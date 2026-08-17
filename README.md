@@ -7,6 +7,11 @@
   <sub>Release 0.1.0</sub>
 </p>
 
+<p align="center">
+  <a href="../../releases">Download</a> ·
+  <a href="https://hyeokk.com/projects/nano-sim/docs">Documentation</a>
+</p>
+
 ---
 
 ## About
@@ -20,6 +25,12 @@ mirrors a real bench setup.
 This is **Release 0.1.0**, an early prototype. Core simulation and sensors are working;
 UI polish, window resizing, and in-app exit controls are still in progress and will
 arrive in later updates.
+
+## Documentation
+
+Full documentation — setup, sensors, the Python/TCP API, and dataset tooling — lives at:
+
+**→ [hyeokk.com/projects/nano-sim/docs](https://hyeokk.com/projects/nano-sim/docs)**
 
 ## Download
 
@@ -72,4 +83,6 @@ time you open it. This is expected — follow the steps for your platform.
 
 ## License
 
-See [LICENSE](LICENSE).
+Licensed under the Apache License 2.0 — see [LICENSE](LICENSE) and [NOTICE](NOTICE).
+
+Copyright 2026 Junhyeok Lee
