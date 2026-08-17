@@ -17,9 +17,9 @@
 
 <br>
 
-<a href="../../releases"><img src="https://img.shields.io/badge/Download-0071E3?style=for-the-badge&labelColor=0071E3" alt="Download"></a>
-&nbsp;
-<a href="https://hyeokk.com/projects/nano-sim/docs"><img src="https://img.shields.io/badge/Documentation-1D1D1F?style=for-the-badge&labelColor=1D1D1F" alt="Documentation"></a>
+<a href="../../releases"><img src="https://img.shields.io/badge/%C2%A0%C2%A0%C2%A0Download%C2%A0%C2%A0%C2%A0-0071E3?style=for-the-badge&labelColor=0071E3" alt="Download"></a>
+&nbsp;&nbsp;
+<a href="https://hyeokk.com/projects/nano-sim/docs"><img src="https://img.shields.io/badge/Documentation-8E8E93?style=for-the-badge&labelColor=8E8E93" alt="Documentation"></a>
 
 </div>
 
