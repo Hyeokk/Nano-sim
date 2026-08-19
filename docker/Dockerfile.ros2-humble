@@ -1,0 +1,16 @@
+# ROS 2 Humble (Ubuntu 22.04) + rosbridge for Nano-sim.
+# Build from the repo root:
+#   docker build -f docker/Dockerfile.ros2-humble -t nanosim-ros:humble .
+FROM ros:humble-ros-base
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        ros-humble-rosbridge-suite \
+        python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /ws
+COPY examples/ros2/nanosim_driver.py /ws/nanosim_driver.py
+
+EXPOSE 9090
+# rosbridge_server binds 0.0.0.0:9090 by default.
+CMD ["bash", "-lc", "source /opt/ros/humble/setup.bash && ros2 launch rosbridge_server rosbridge_websocket_launch.xml"]
