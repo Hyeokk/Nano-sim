@@ -20,6 +20,7 @@ Controls
 
 POSIX only (macOS / Linux), matching the shipped Nano-sim binaries.
 """
+import math
 import select
 import shutil
 import sys
@@ -33,8 +34,12 @@ from geometry_msgs.msg import Twist
 PERIOD = 0.05           # 20 Hz, comfortably above the 0.5 s command timeout
 MAX_SPEED = 7.0         # m/s  (linear.x ceiling)
 SPEED_STEP = 0.5        # m/s per key press (14 taps to the ceiling)
-MAX_YAW = 2.0           # rad/s
-YAW_STEP = 0.2          # rad/s per key press
+STEER_STEP = 0.10       # per key press, normalised -1..1 (matches the Python API)
+
+# /cmd_vel carries a yaw RATE, not a steering angle, so a normalised steering
+# command has to be converted with the CURRENT speed (bicycle model).
+MAX_STEER_DEG = 26.0    # measured full lock on the LaTrax Rally
+WHEELBASE = 0.165       # m
 
 ARROWS = {"[A": "UP", "[B": "DOWN", "[C": "RIGHT", "[D": "LEFT"}
 
@@ -47,8 +52,8 @@ STATUS_LINES = 2        # sticky block pinned to the bottom of the scroll region
 
 # Kept to 79 chars so it survives _fit() on an 80-column terminal — a clipped
 # legend defeats the whole point of pinning it.
-LEGEND = ("[w/s] speed  [a/d] yaw  [space] stop  "
-          "[x] straight  [h] help  [q] quit")
+LEGEND = ("[w/s] speed  [a/d] steer  [space] stop  "
+          "[x] centre  [h] help  [q] quit")
 
 
 def _fit(s):
@@ -90,11 +95,11 @@ def draw_status(lines):
 HELP = [
     ("w / UP", "linear.x   +%.2f m/s   (max %.2f)" % (SPEED_STEP, MAX_SPEED)),
     ("s / DOWN", "linear.x   -%.2f m/s   (negative = reverse)" % SPEED_STEP),
-    ("a / LEFT", "angular.z  +%.2f rad/s  (ROS: + = left)" % YAW_STEP),
-    ("d / RIGHT", "angular.z  -%.2f rad/s  (ROS: - = right)" % YAW_STEP),
+    ("a / LEFT", "steer left   %.2f   (-1..1, lock %.0f deg)" % (STEER_STEP, MAX_STEER_DEG)),
+    ("d / RIGHT", "steer right  %.2f   (ROS: + = left)" % STEER_STEP),
     (None, None),
-    ("space", "full stop (linear + angular -> 0)"),
-    ("x", "straighten (angular.z -> 0)"),
+    ("space", "full stop (speed + steering -> 0)"),
+    ("x", "centre steering only"),
     (None, None),
     ("h", "show these keys again"),
     ("q  /  ^C", "quit"),
@@ -107,6 +112,8 @@ def print_help():
     say("+" + "-" * width + "+")
     say("|" + " NANO-SIM  ROS 2  KEYBOARD TELEOP ".center(width) + "|")
     say("|" + ("/cmd_vel @ %.0f Hz" % (1.0 / PERIOD)).center(width) + "|")
+    say("|" + ("angular.z = v * tan(steer * %.0f deg) / %.3f m"
+              % (MAX_STEER_DEG, WHEELBASE)).center(width) + "|")
     say("+" + "-" * width + "+")
     for key, desc in HELP:
         if key is None:
@@ -114,6 +121,22 @@ def print_help():
         else:
             say("|  %-12s  %-*s|" % (key, width - 16, desc))
     say("+" + "-" * width + "+")
+
+
+def yaw_rate(speed, steer):
+    """Normalised steering (-1..1) -> angular.z in rad/s.
+
+        delta = steer * MAX_STEER_DEG
+        omega = v * tan(delta) / L
+
+    Commanding a fixed yaw rate instead is what stopped full steer from
+    reaching full lock: the angle a given omega produces is atan(omega*L/v),
+    which shrinks as speed rises — 2 rad/s is 18 deg at 1 m/s but only 2.7 deg
+    at 7 m/s. Converting here keeps +/-1 at full lock for every speed.
+
+    At v = 0 the result is 0: an Ackermann chassis cannot rotate in place.
+    """
+    return speed * math.tan(math.radians(steer * MAX_STEER_DEG)) / WHEELBASE
 
 
 def bar(value, limit, half=6):
@@ -159,7 +182,7 @@ class NanoSimTeleop(Node):
         self.pub = self.create_publisher(Twist, "/cmd_vel", 10)
         self.timer = self.create_timer(PERIOD, self.tick)
         self.speed = 0.0
-        self.yaw = 0.0
+        self.steer = 0.0        # normalised -1..1
         self.done = False
 
     def tick(self):
@@ -176,25 +199,27 @@ class NanoSimTeleop(Node):
             elif key in ("s", "DOWN"):
                 self.speed = clamp(self.speed - SPEED_STEP, MAX_SPEED)
             elif key in ("a", "LEFT"):
-                self.yaw = clamp(self.yaw + YAW_STEP, MAX_YAW)   # ROS: + = left
+                self.steer = clamp(self.steer + STEER_STEP, 1.0)  # ROS: + = left
             elif key in ("d", "RIGHT"):
-                self.yaw = clamp(self.yaw - YAW_STEP, MAX_YAW)
+                self.steer = clamp(self.steer - STEER_STEP, 1.0)
             elif key == " ":
-                self.speed = self.yaw = 0.0
+                self.speed = self.steer = 0.0
             elif key == "x":
-                self.yaw = 0.0
+                self.steer = 0.0
             elif key == "h":
                 print_help()
 
+        yaw = yaw_rate(self.speed, self.steer)
         cmd = Twist()
         cmd.linear.x = self.speed
-        cmd.angular.z = self.yaw
+        cmd.angular.z = yaw
         self.pub.publish(cmd)
 
         draw_status([
             LEGEND,
             f"SPD {bar(self.speed, MAX_SPEED)} {self.speed:+.2f} m/s  "
-            f"YAW {bar(self.yaw, MAX_YAW)} {self.yaw:+.2f} rad/s",
+            f"STR {bar(self.steer, 1.0)} {self.steer:+.2f}  "
+            f"yaw {yaw:+6.2f} rad/s",
         ])
 
     def stop(self):
