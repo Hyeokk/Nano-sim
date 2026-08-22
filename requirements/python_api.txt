@@ -1,0 +1,39 @@
+# Nano-sim — Python client / dataset tooling
+#
+#   python3 -m venv .venv
+#   source .venv/bin/activate
+#   pip install -U pip
+#   pip install -r requirements/python_api.txt
+#
+# Covers: drive_example.py, collect_seg_dataset.py, seg_labels.py,
+#         validate_dataset.py
+#
+# Requires Python >= 3.8.
+#
+# NOT covered here (on purpose):
+#   * drive_example.py itself needs nothing from pip — socket/struct/termios/tty
+#     are all stdlib. It is listed above only because it shares this venv.
+#   * drive_example_ros1.py / drive_example_ros2.py need rospy / rclpy, which
+#     are NOT on PyPI. Source the ROS setup script and create that venv with
+#     `python3 -m venv --system-site-packages .venv` so the system ROS Python
+#     packages stay visible.
+#   * Stable-Baselines3 / torch (RL training) — separate venv (requirements/rl.txt).
+
+# --- core -------------------------------------------------------------------
+# Array handling for get_frame_bin payloads, seg colour<->index, npz validation.
+numpy>=1.24,<3
+
+# Image I/O fallback. collect_seg_dataset.py and validate_dataset.py try OpenCV
+# first and fall back to Pillow, so Pillow alone is a complete, working install.
+pillow>=10.0
+
+# --- optional, recommended --------------------------------------------------
+# Faster JPEG/PNG encode+decode than Pillow at 1920x1080. Purely a speed win:
+# both scripts degrade to Pillow if the import fails.
+#
+# Comment this out on Jetson (JetPack ships its own cv2 built against CUDA; a
+# pip wheel shadows it and breaks GPU paths). There, use
+# `python3 -m venv --system-site-packages .venv` instead.
+#
+# 4.10 is the floor for numpy 2.x ABI compatibility.
+opencv-python>=4.10
