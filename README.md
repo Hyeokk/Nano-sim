@@ -50,27 +50,10 @@ Get the latest build from the [**Releases**](../../releases) page.
 
 ## Install & Run
 
-The app is **not code-signed** (research prototype), so your OS will block it the first
-time you open it. This is expected — follow the steps for your platform.
-
 ### macOS
 
 1. Unzip `Nano-sim-macOS.zip`.
-2. **Right-click** (or Control-click) `Nano-sim.app` → **Open** → **Open** again.
-   You only need to do this once.
-
-<details>
-<summary>macOS says <em>"Nano-sim.app is damaged and can't be opened"</em></summary>
-
-<br>
-
-Clear the quarantine flag in Terminal, then open it normally:
-
-```bash
-xattr -cr /path/to/Nano-sim.app
-```
-
-</details>
+2. Double-click `Nano-sim.app` to launch.
 
 ### Linux
 
